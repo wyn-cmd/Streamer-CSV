@@ -1,146 +1,90 @@
-# Version 1.0
-
-
+# Version 1.1
 
 
 def find_cheapest_streamer(streamer_prices_list, customers):
-    # Initialize a dictionary to store streamer prices
     streamer_prices_dict = {}
-
-    # Fill the dictionary with streamer prices
     for row in streamer_prices_list:
         streamer = row[0]
-        prices = list(map(float, row[1:]))  # Convert the price strings to floats
+        prices = list(map(float, row[1:]))
         streamer_prices_dict[streamer] = prices
 
-    # Initialize the nested list for storing customer subscriptions
     subscriptions = []
+    genres = ["Sports", "Sitcom", "Drama", "Reality", "Film"]
 
-    # Genre mapping
-    genres = ['Sports', 'Sitcom', 'Drama', 'Reality', 'Film']
-
-    # Process each customer
     for customer in customers:
-        name = customer[0]
-        genre1 = customer[1]
-        genre2 = customer[2]
-
-        # Get genre indices
+        name, genre1, genre2 = customer[0], customer[1], customer[2]
         index1 = genres.index(genre1)
         index2 = genres.index(genre2)
 
-        # Initialize variables to find the cheapest streamer
-        min_cost = float('inf')
-        best_streamer = ''
+        min_cost = float("inf")
+        best_streamer = ""
 
-        # Check each streamer to find the cheapest one
         for streamer, prices in streamer_prices_dict.items():
             cost = prices[index1] + prices[index2]
             if cost < min_cost:
                 min_cost = cost
                 best_streamer = streamer
 
-        # Append the result for the current customer
         subscriptions.append([name, best_streamer, min_cost])
 
-    # Print the subscriptions list with a heading
     print("\nCustomer Subscriptions:")
     for subscription in subscriptions:
         print(subscription)
 
     return subscriptions
 
-# Read data from the file
-file_name = 'streamers.txt'
+
+file_name = "streamers.txt"
 streamer_prices_list = []
 
-# Open the file and read the data
-with open(file_name, 'r') as file:
-    # Read the header line and ignore it
-    header = file.readline().strip().split(',')
+try:
+    with open(file_name, "r") as file:
+        header = file.readline().strip().split(",")
+        for line in file:
+            if line.strip():
+                data = line.strip().split(",")
+                streamer_prices_list.append(data)
+except FileNotFoundError:
+    print(f"Error: The file '{file_name}' was not found.")
+    streamer_prices_list = []
 
-    # Read the remaining lines for the streamer data
-    for line in file:
-        data = line.strip().split(',')
-        streamer_prices_list.append(data)
-
-# Print the streamer prices list with a heading
-print('\nStreamer Prices List:')
+print("\nStreamer Prices List:")
 for row in streamer_prices_list:
     print(row)
 
-# Define the customer list
 customers = [
-        ['Angelica', 'Sports', 'Reality'],
-        ['Eliza', 'Sitcom', 'Drama'],
-        ['Alex', 'Drama', 'Sports'],
-        ['Peggy', 'Sitcom', 'Reality'],
-        ['George', 'Sports', 'Film'],
-        ['Andy', 'Reality', 'Sports']
-    ]
+    ["Angelica", "Sports", "Reality"],
+    ["Eliza", "Sitcom", "Drama"],
+    ["Alex", "Drama", "Sports"],
+    ["Peggy", "Sitcom", "Reality"],
+    ["George", "Sports", "Film"],
+    ["Andy", "Reality", "Sports"],
+]
 
-# Find the cheapest streamer for each customer
 subscriptions = find_cheapest_streamer(streamer_prices_list, customers)
 
-# Display customers and their subscriptions
-print('\nName            Genre 1         Genre 2         Streamer        Cost')
-num = 0
+print("\nName            Genre 1         Genre 2         Streamer        Cost")
 total = 0
-metflicks = 0
-duriantv = 0
-risney = 0
-composite = 0
+provider_counts = {"Metflicks": 0, "DurianTV+": 0, "Risney+": 0, "CompositeVideo": 0}
 provider_list = []
-for person in subscriptions:
-    print(f'{person[0]: <15} {customers[num][1]: <15} {customers[num][2]: <15} {person[1]: <15} {person[2]: <15.2f} ')
-    if person[1] == 'Metflicks':
-        metflicks += 1
-        provider_list.append(['Metflicks', person[2]])
-    elif person[1] == 'DurianTV+':
-        duriantv += 1
-        provider_list.append(['DurianTV+', person[2]])
-    elif person[1] == 'Risney+':
-        risney += 1
-        provider_list.append(['Risney+', person[2]])
-    elif person[1] == 'CompositeVideo':
-        composite += 1
-        provider_list.append(['CompositeVideo', person[2]])
 
-# calculate average spent
-total += person[2]
-num += 1
-average = total / num
-print(f'\nAverage spent: ${average:.2f}')
+for idx, person in enumerate(subscriptions):
+    name, streamer, cost = person[0], person[1], person[2]
+    cust_genre1 = customers[idx][1]
+    cust_genre2 = customers[idx][2]
 
+    print(f"{name: <15} {cust_genre1: <15} {cust_genre2: <15} {streamer: <15} {cost: <15.2f}")
 
-if metflicks > duriantv:
-    if metflicks > risney:
-        if metflicks > composite:
-            print('Most subscribed streamer: Metflicks')
-            print(f'Number of subscribers: {metflicks}')
-        else:
-            print('Most subscribed streamer: Composite')
-            print(f'Number of subscribers: {composite}')
-    else:
-        if risney > composite:
-            print('Most subscribed streamer: Risney+')
-            print(f'Number of subscribers: {risney}')
-        else:
-            print('Most subscribed streamer: CompositeVideo')
-            print(f'Number of subscribers: {composite}')
+    if streamer in provider_counts:
+        provider_counts[streamer] += 1
+        provider_list.append([streamer, cost])
 
-else:
-    if duriantv > risney:
-        if duriantv > composite:
-            print('Most subscribed streamer: DurianTV+')
-            print(f'Number of subscribers: {duriantv}')
-        else:
-            print('Most subscribed streamer: CompositeVideo')
-            print(f'Number of subscribers: {composite}')
-    else:
-        if risney > composite:
-            print('Most subscribed streamer: Risney+')
-            print(f'Number of subscribers: {risney}')
-        else:
-            print('Most subscribed streamer: CompositeVideo')
-            print(f'Number of subscribers: {composite}')
+    total += cost
+
+num_customers = len(subscriptions)
+average = total / num_customers if num_customers > 0 else 0
+print(f"\nAverage spent: ${average:.2f}")
+
+most_popular_streamer = max(provider_counts, key=provider_counts.get)
+print(f"Most subscribed streamer: {most_popular_streamer}")
+print(f"Number of subscribers: {provider_counts[most_popular_streamer]}")
