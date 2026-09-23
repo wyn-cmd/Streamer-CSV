@@ -1,4 +1,6 @@
-# Version 1.1
+# Version 1.2
+
+from collections import Counter
 
 
 def find_cheapest_streamer(streamer_prices_list, customers):
@@ -65,8 +67,9 @@ subscriptions = find_cheapest_streamer(streamer_prices_list, customers)
 
 print("\nName            Genre 1         Genre 2         Streamer        Cost")
 total = 0
-provider_counts = {"Metflicks": 0, "DurianTV+": 0, "Risney+": 0, "CompositeVideo": 0}
-provider_list = []
+# count by whatever streamer name the CSV holds, so the names in the file
+# do not have to be listed a second time here as well
+provider_counts = Counter()
 
 for idx, person in enumerate(subscriptions):
     name, streamer, cost = person[0], person[1], person[2]
@@ -75,16 +78,14 @@ for idx, person in enumerate(subscriptions):
 
     print(f"{name: <15} {cust_genre1: <15} {cust_genre2: <15} {streamer: <15} {cost: <15.2f}")
 
-    if streamer in provider_counts:
-        provider_counts[streamer] += 1
-        provider_list.append([streamer, cost])
-
+    provider_counts[streamer] += 1
     total += cost
 
 num_customers = len(subscriptions)
 average = total / num_customers if num_customers > 0 else 0
 print(f"\nAverage spent: ${average:.2f}")
 
-most_popular_streamer = max(provider_counts, key=provider_counts.get)
-print(f"Most subscribed streamer: {most_popular_streamer}")
-print(f"Number of subscribers: {provider_counts[most_popular_streamer]}")
+if provider_counts:
+    most_popular_streamer, subscribers = provider_counts.most_common(1)[0]
+    print(f"Most subscribed streamer: {most_popular_streamer}")
+    print(f"Number of subscribers: {subscribers}")
