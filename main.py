@@ -1,4 +1,4 @@
-# Version 1.3
+# Version 1.4
 import sys
 from collections import Counter
 
@@ -12,13 +12,13 @@ def load_streamer_data(file_name):
 
             # Use the header to determine the available genres
             header = lines[0].split(",")
-            genres = header[1:]
+            genres = [g.strip() for g in header[1:]]
             
             streamer_prices = {}
             for line in lines[1:]:
                 parts = line.split(",")
-                name = parts[0]
-                prices = [float(p) for p in parts[1:]]
+                name = parts[0].strip()
+                prices = [float(p.strip()) for p in parts[1:]]
                 streamer_prices[name] = prices
             
             return genres, streamer_prices
@@ -81,6 +81,10 @@ def main():
 
     subscriptions = get_best_subscriptions(streamer_prices, customers, genres)
 
+    if not subscriptions:
+        print("\nNo subscriptions were processed.")
+        return
+
     print("\nName            Genre 1         Genre 2         Streamer        Cost")
     total_spent = 0
     provider_counts = Counter()
@@ -91,10 +95,6 @@ def main():
         
         provider_counts[sub['streamer']] += 1
         total_spent += sub['cost']
-
-    if not subscriptions:
-        print("No subscriptions were processed.")
-        return
 
     avg_cost = total_spent / len(subscriptions)
     print(f"\nAverage spent: ${avg_cost:.2f}")
