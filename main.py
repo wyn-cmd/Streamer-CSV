@@ -1,91 +1,108 @@
-# Version 1.2
-
+# Version 1.3
+import sys
 from collections import Counter
 
+# Reads streamer prices from a CSV file and returns the genres and price mapping
+def load_streamer_data(file_name):
+    try:
+        with open(file_name, "r") as file:
+            lines = [line.strip() for line in file if line.strip()]
+            if not lines:
+                return [], {}
 
-def find_cheapest_streamer(streamer_prices_list, customers):
-    streamer_prices_dict = {}
-    for row in streamer_prices_list:
-        streamer = row[0]
-        prices = list(map(float, row[1:]))
-        streamer_prices_dict[streamer] = prices
+            # Use the header to determine the available genres
+            header = lines[0].split(",")
+            genres = header[1:]
+            
+            streamer_prices = {}
+            for line in lines[1:]:
+                parts = line.split(",")
+                name = parts[0]
+                prices = [float(p) for p in parts[1:]]
+                streamer_prices[name] = prices
+            
+            return genres, streamer_prices
+    except FileNotFoundError:
+        print(f"Error: The file '{file_name}' was not found.")
+        sys.exit(1)
+    except (ValueError, IndexError) as e:
+        print(f"Error parsing CSV data: {e}")
+        sys.exit(1)
 
+# Calculates the cheapest streamer for each customer based on their preferred genres
+def get_best_subscriptions(streamer_prices, customers, genres):
     subscriptions = []
-    genres = ["Sports", "Sitcom", "Drama", "Reality", "Film"]
 
     for customer in customers:
-        name, genre1, genre2 = customer[0], customer[1], customer[2]
-        index1 = genres.index(genre1)
-        index2 = genres.index(genre2)
+        name, g1, g2 = customer
+        
+        # Find indices for the requested genres
+        try:
+            idx1 = genres.index(g1)
+            idx2 = genres.index(g2)
+        except ValueError as e:
+            print(f"Error: Genre not found for customer {name}: {e}")
+            continue
 
         min_cost = float("inf")
-        best_streamer = ""
+        best_streamer = None
 
-        for streamer, prices in streamer_prices_dict.items():
-            cost = prices[index1] + prices[index2]
+        for streamer, prices in streamer_prices.items():
+            cost = prices[idx1] + prices[idx2]
             if cost < min_cost:
                 min_cost = cost
                 best_streamer = streamer
 
-        subscriptions.append([name, best_streamer, min_cost])
-
-    print("\nCustomer Subscriptions:")
-    for subscription in subscriptions:
-        print(subscription)
+        subscriptions.append({
+            "name": name,
+            "streamer": best_streamer,
+            "cost": min_cost,
+            "genres": (g1, g2)
+        })
 
     return subscriptions
 
+def main():
+    file_name = "streamers.txt"
+    customers = [
+        ["Angelica", "Sports", "Reality"],
+        ["Eliza", "Sitcom", "Drama"],
+        ["Alex", "Drama", "Sports"],
+        ["Peggy", "Sitcom", "Reality"],
+        ["George", "Sports", "Film"],
+        ["Andy", "Reality", "Sports"],
+    ]
 
-file_name = "streamers.txt"
-streamer_prices_list = []
+    genres, streamer_prices = load_streamer_data(file_name)
 
-try:
-    with open(file_name, "r") as file:
-        header = file.readline().strip().split(",")
-        for line in file:
-            if line.strip():
-                data = line.strip().split(",")
-                streamer_prices_list.append(data)
-except FileNotFoundError:
-    print(f"Error: The file '{file_name}' was not found.")
-    streamer_prices_list = []
+    print("\nStreamer Prices List:")
+    for streamer, prices in streamer_prices.items():
+        print(f"{streamer}: {prices}")
 
-print("\nStreamer Prices List:")
-for row in streamer_prices_list:
-    print(row)
+    subscriptions = get_best_subscriptions(streamer_prices, customers, genres)
 
-customers = [
-    ["Angelica", "Sports", "Reality"],
-    ["Eliza", "Sitcom", "Drama"],
-    ["Alex", "Drama", "Sports"],
-    ["Peggy", "Sitcom", "Reality"],
-    ["George", "Sports", "Film"],
-    ["Andy", "Reality", "Sports"],
-]
+    print("\nName            Genre 1         Genre 2         Streamer        Cost")
+    total_spent = 0
+    provider_counts = Counter()
 
-subscriptions = find_cheapest_streamer(streamer_prices_list, customers)
+    for sub in subscriptions:
+        g1, g2 = sub["genres"]
+        print(f"{sub['name']: <15} {g1: <15} {g2: <15} {sub['streamer']: <15} {sub['cost']: <15.2f}")
+        
+        provider_counts[sub['streamer']] += 1
+        total_spent += sub['cost']
 
-print("\nName            Genre 1         Genre 2         Streamer        Cost")
-total = 0
-# count by whatever streamer name the CSV holds, so the names in the file
-# do not have to be listed a second time here as well
-provider_counts = Counter()
+    if not subscriptions:
+        print("No subscriptions were processed.")
+        return
 
-for idx, person in enumerate(subscriptions):
-    name, streamer, cost = person[0], person[1], person[2]
-    cust_genre1 = customers[idx][1]
-    cust_genre2 = customers[idx][2]
+    avg_cost = total_spent / len(subscriptions)
+    print(f"\nAverage spent: ${avg_cost:.2f}")
 
-    print(f"{name: <15} {cust_genre1: <15} {cust_genre2: <15} {streamer: <15} {cost: <15.2f}")
+    if provider_counts:
+        most_popular, count = provider_counts.most_common(1)[0]
+        print(f"Most subscribed streamer: {most_popular}")
+        print(f"Number of subscribers: {count}")
 
-    provider_counts[streamer] += 1
-    total += cost
-
-num_customers = len(subscriptions)
-average = total / num_customers if num_customers > 0 else 0
-print(f"\nAverage spent: ${average:.2f}")
-
-if provider_counts:
-    most_popular_streamer, subscribers = provider_counts.most_common(1)[0]
-    print(f"Most subscribed streamer: {most_popular_streamer}")
-    print(f"Number of subscribers: {subscribers}")
+if __name__ == "__main__":
+    main()
