@@ -2,10 +2,11 @@
 import sys
 from collections import Counter
 
-# Reads streamer prices from a CSV file and returns the genres and price mapping
+# Read streamer prices from a CSV file and return genres and price mapping
 def load_streamer_data(file_name):
     try:
         with open(file_name, "r") as file:
+            # Filter out empty lines
             lines = [line.strip() for line in file if line.strip()]
             if not lines:
                 return [], {}
@@ -29,7 +30,7 @@ def load_streamer_data(file_name):
         print(f"Error parsing CSV data: {e}")
         sys.exit(1)
 
-# Calculates the cheapest streamer for each customer based on their preferred genres
+# Calculate the cheapest streamer for each customer based on their preferred genres
 def get_best_subscriptions(streamer_prices, customers, genres):
     subscriptions = []
 
